@@ -14,7 +14,31 @@ function handler(req, res) {
 }
 
 io.sockets.on('connection', socket => {
-  socket.on('key', data => {
-    console.log(data);
+  let pressed = [];
+
+  function keyDown(key) {
+    console.log("v", key, pressed);
+  }
+
+  function keyUp(key) {
+    console.log("^", key, pressed);
+  }
+
+  function keyRepeat(key) {
+    console.log(".", key, pressed);
+  }
+
+  socket.on('keydown', key => {
+    pressed.push(key);
+    keyDown(key);
+  });
+
+  socket.on('keyrepeat', key => {
+    keyRepeat(key)
+  })
+
+  socket.on('keyup', key => {
+    pressed.splice(pressed.indexOf(key), 1)
+    keyUp(key);
   });
 });

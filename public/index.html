@@ -3,16 +3,15 @@
 <body>
 
 <h1>Control Keys</h1>
-<p><input type="checkbox" id="key"></p>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
 <script>
   let socket = io();
-  window.addEventListener("load", () => {
-    let keybox = document.getElementById("key");
-    keybox.addEventListener("change", () => {
-      socket.emit("key", Number(keybox.checked));
-    });
+  window.addEventListener("keyup", event => {
+    socket.emit("keyup", event.key);
+  });
+  window.addEventListener("keydown", event => {
+    socket.emit(event.repeat ? "keyrepeat" : "keydown", event.key);
   });
 </script>
 
