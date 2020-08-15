@@ -1,0 +1,12 @@
+{
+  "name": "remote-control",
+  "version": "1.0.0",
+  "description": "Pipe certain keyboard characters to a remote computer",
+  "main": "webserver.js",
+  "scripts": {
+    "server": "node webserver.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
