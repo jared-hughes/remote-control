@@ -95,13 +95,24 @@ for (let key of Object.keys(keyMapping)) {
 let totalPressed = {...basePressedCount};
 let pressedBySocket = [];
 let sockets = []
+
+function getSocketIndex(socket) {
+  for (let i = 0; i < sockets.length; i++) {
+    if (sockets[i] == socket) {
+      return i;
+    }
+  }
+}
+
 io.sockets.on('connection', socket => {
+  sockets.push(socket);
+
+  /* Key presses */
   for (let key of Object.keys(totalPressed)) {
     if (totalPressed[key] > 0) {
       socket.emit("keydown", key);
     }
   }
-  sockets.push(socket);
   pressedBySocket.push({...basePressedCount})
   for (let s of ["down", "up"]) {
     socket.on('key' + s, key => {
@@ -121,14 +132,10 @@ io.sockets.on('connection', socket => {
       console.log(s, key);
       if (key in keyMapping) {
         if (s == "up") {
-          for (let i = 0; i < sockets.length; i++) {
-            if (sockets[i] == socket) {
-              if (pressedBySocket[i][key]) {
-                pressedBySocket[i][key] = false;
-                totalPressed[key] -= 1;
-              }
-              break;
-            }
+          i = getSocketIndex(socket);
+          if (pressedBySocket[i][key]) {
+            pressedBySocket[i][key] = false;
+            totalPressed[key] -= 1;
           }
         }
         if (totalPressed[key] == 0) {
@@ -146,17 +153,20 @@ io.sockets.on('connection', socket => {
           }
         }
         if (s == "down") {
-          for (let i = 0; i < sockets.length; i++) {
-            if (sockets[i] == socket) {
-              if (!pressedBySocket[i][key]) {
-                pressedBySocket[i][key] = true;
-                totalPressed[key] += 1;
-              }
-              break;
-            }
+          i = getSocketIndex(socket);
+          if (!pressedBySocket[i][key]) {
+            pressedBySocket[i][key] = true;
+            totalPressed[key] += 1;
           }
         }
       }
     });
   }
+
+  /* Scroll wheel */
+  socket.on('wheel', data => {
+    let [dx, dy] = data;
+    console.log("scroll", dx, dy);
+    robot.scrollMouse(dx, dy);
+  })
 });

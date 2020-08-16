@@ -121,6 +121,8 @@
       event.preventDefault();
     }
   }
+
+  /* Key presses */
   window.addEventListener("keyup", event => {
     preventDefault(event);
     keyup(event.code);
@@ -129,6 +131,8 @@
     preventDefault(event);
     keydown(event.code);
   });
+
+  /* Mouse clicks */
   window.addEventListener("mousedown", event => {
     keydown(mouseNames[event.button]);
   });
@@ -137,6 +141,11 @@
   });
   window.addEventListener("contextmenu", event => {
     event.preventDefault();
+  })
+
+  /* Scroll wheel movement */
+  window.addEventListener("wheel", event => {
+    socket.emit("wheel", [event.deltaX, event.deltaY]);
   })
   // for when the user defocuses the browser tab
   window.addEventListener("blur", keyupall);
