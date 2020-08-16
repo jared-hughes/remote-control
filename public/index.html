@@ -13,7 +13,7 @@
    * fn keys smaller
    * last row taller to accomodate arrow keys
    */
-  grid-template-rows: 2.5vw repeat(4, 3.57vw) repeat(2, 2.4vw);
+  grid-template-rows: 2.5vw repeat(4, 3.57vw) repeat(2, 2.4vw) 0.5vw 5vw;
 }
 
 .key {
@@ -29,6 +29,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
 <script>
+  const mouseNames = ["#MouseLeft", "#MouseMiddle", "#MouseRight"]
   let keyboard = document.getElementById("keyboard")
   // based on my keyboard, may want configuration
   const keyboardLayout = [
@@ -37,7 +38,12 @@
     ["Tab", "KeyQ", "KeyW", "KeyE", "KeyR", "KeyT", "KeyY", "KeyU", "KeyI", "KeyO", "KeyP", "BracketLeft", "BracketRight", "Backslash"],
     ["CapsLock", "KeyA", "KeyS", "KeyD", "KeyF", "KeyG", "KeyH", "KeyJ", "KeyK", "KeyL", "Semicolon", "Quote", "Enter"],
     ["ShiftLeft", "KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyN", "KeyM", "Comma", "Period", "Slash", "ShiftRight"],
-    ["ControlLeft", "AltLeft", "Space", "AltRight", "ControlRight", "ArrowLeft", "ArrowUp", null, "ArrowDown", "ArrowRight"]
+    ["ControlLeft", "AltLeft", "Space", "AltRight", "ControlRight", "ArrowLeft", "ArrowUp", null, "ArrowDown", "ArrowRight"],
+    // empty line for a second row in the previous row
+    [],
+    // empty line as spacing from the mouse
+    [],
+    [null, ...mouseNames, null],
   ]
   const keyboardDimensions = [
     [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
@@ -45,10 +51,13 @@
     [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
     [3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3],
     [4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4],
-    [3, 3, 10, 3, 3, 2, 2, -2, 2, 2]
+    [3, 3, 10, 3, 3, 2, 2, -2, 2, 2],
+    [],
+    [],
+    [6, 4, 2, 4, 12],
   ]
   let keys = {}
-  for (let y=0; y < 6; y++) {
+  for (let y=0; y < keyboardLayout.length; y++) {
     startX = 1;
     for (let i=0; i < keyboardLayout[y].length; i++) {
       endX = startX + keyboardDimensions[y][i];
@@ -120,6 +129,16 @@
     preventDefault(event);
     keydown(event.code);
   });
+  window.addEventListener("mousedown", event => {
+    keydown(mouseNames[event.button]);
+  });
+  window.addEventListener("mouseup", event => {
+    keyup(mouseNames[event.button]);
+  });
+  window.addEventListener("contextmenu", event => {
+    event.preventDefault();
+  })
+  // for when the user defocuses the browser tab
   window.addEventListener("blur", keyupall);
 </script>
 

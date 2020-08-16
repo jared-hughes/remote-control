@@ -7,6 +7,11 @@ console.log("[INFO] Libraries loaded.")
 
 http.listen(8000);
 
+const mouseMapping = {
+  "#MouseLeft": "left",
+  "#MouseMiddle": "middle",
+  "#MouseRight": "right",
+}
 // input: javascript key event.code (https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code/code_values)
 // output: robotjs key names (https://robotjs.io/docs/syntax#keyboard)
 let keyMapping = {
@@ -48,6 +53,7 @@ let keyMapping = {
   "Period": ".",
   "Slash": "/",
   "Space": " ",
+  ...mouseMapping,
 }
 // Letter keys
 for (let c = 0; c < 26; c++) {
@@ -74,6 +80,7 @@ function handler(req, res) {
 }
 
 robot.setKeyboardDelay(0);
+robot.setMouseDelay(0);
 
 console.log("[INFO] Listening ready.")
 
@@ -125,7 +132,12 @@ io.sockets.on('connection', socket => {
           }
         }
         if (totalPressed[key] == 0) {
-          robot.keyToggle(keyMapping[key], s);
+          // note reversed argument order between mouseToggle and keyToggle
+          if (key in mouseMapping) {
+            robot.mouseToggle(s, mouseMapping[key])
+          } else {
+            robot.keyToggle(keyMapping[key], s);
+          }
           // Tell other clients that this key is pressed/unpressed
           for (let sock of sockets) {
             if (sock != socket) {
