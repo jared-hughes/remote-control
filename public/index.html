@@ -8,10 +8,10 @@
 <script>
   let socket = io();
   window.addEventListener("keyup", event => {
-    socket.emit("keyup", event.key);
+    socket.emit("keyup", event.code);
   });
   window.addEventListener("keydown", event => {
-    socket.emit(event.repeat ? "keyrepeat" : "keydown", event.key);
+    socket.emit(event.repeat ? "keyrepeat" : "keydown", event.code);
   });
 </script>
 

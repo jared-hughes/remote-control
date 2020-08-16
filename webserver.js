@@ -7,25 +7,62 @@ console.log("[INFO] Libraries loaded.")
 
 http.listen(8000);
 
-// JS key names when they are the same in robot.js
-let permittedKeys = [' ', '!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?', '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '[', '\\', ']', '^', '_', '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '{', '|', '}', '~']
-  + [""]
-// input: javascript key event key names (https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values)
+// input: javascript key event.code (https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code/code_values)
 // output: robotjs key names (https://robotjs.io/docs/syntax#keyboard)
-// keyMapping currently set up for Duck Game controls (https://duckgame.fandom.com/wiki/Controls)
-// TODO: proper configuration menu
 let keyMapping = {
+  "Backspace": "backspace",
+  "Delete": "delete",
+  "Enter": "enter",
+  "Tab": "tab",
+  "Escape": "escape",
   "ArrowUp": "up",
   "ArrowLeft": "left",
   "ArrowDown": "down",
   "ArrowRight": "right",
-  "Escape": "escape",
-  "Shift": "shift",
+  "Home": "home",
+  "End": "end",
+  "PageUp": "pageup",
+  "PageDown": "pagedown",
+  // "command" excluded since browser cannot generate it
+  "AltLeft": "alt",
+  "AltRight": "alt",
+  "ControlLeft": "control",
+  "ControlRight": "control",
+  "ShiftLeft": "shift",
+  "ShiftRight": "shift_right",
+  // No robot.js Mac support
+  "PrintScreen": "printscreen",
+  // No robot.js Mac support
+  "Insert": "insert",
+  // audio* excluded since browser cannot generate them
+  // lights* excluded since browser cannot generate them
+  "Minus": "-",
+  "Equal": "=",
+  "BracketLeft": "]",
+  "BracketRight": "[",
+  "Semicolon": ";",
+  "Quote": "'",
+  "Backquote": "`",
+  "Backslash": "\\",
+  "Comma": ",",
+  "Period": ".",
+  "Slash": "/",
+  "Space": " ",
 }
-for (let key of permittedKeys) {
-  keyMapping[key] = key;
+// Letter keys
+for (let c = 0; c < 26; c++) {
+  keyMapping["Key" + String.fromCharCode(65 + c)] = String.fromCharCode(97 + c);
 }
-permittedKeys = Object.keys(keyMapping);
+for (let i = 0; i < 10; i++) {
+  // Digit keys
+  keyMapping["Digit" + i] = "" + i;
+  // Numpad keys (No robot.js linux support)
+  keyMapping["Numpad" + i] = "numpad_" + i;
+}
+for (let i = 1; i <= 12; i++) {
+  // Fn keys
+  keyMapping["F" + i] = "f" + i;
+}
 
 function handler(req, res) {
   // always give index.html regardless of the path
