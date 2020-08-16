@@ -2,17 +2,95 @@
 <html>
 <body>
 
-<h1>Control Keys</h1>
+<div id="keyboard"></div>
+
+<style>
+#keyboard {
+  display: grid;
+  grid-gap: 0.5vw;
+  grid-template-columns: repeat(28, auto);
+  /* key height = 1/28 of width; fn keys smaller */
+  grid-template-rows: 2.5vw repeat(5, 3.57vw);
+}
+
+.key {
+  border-radius: 0.6vw;
+  background: hsl(230, 50%, 90%);
+}
+
+.key.pressed {
+  background: blue;
+  background: hsl(230, 50%, 70%);
+}
+</style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
 <script>
+  let keyboard = document.getElementById("keyboard")
+  // based on my keyboard, may want configuration
+  const keyboardLayout = [
+    ["Escape", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "Delete"],
+    ["Backquote", "Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6", "Digit7", "Digit8", "Digit9", "Digit0", "Minus", "Equal", "Backspace"],
+    ["Tab", "KeyQ", "KeyW", "KeyE", "KeyR", "KeyT", "KeyY", "KeyU", "KeyI", "KeyO", "KeyP", "BracketLeft", "BracketRight", "Backslash"],
+    ["CapsLock", "KeyA", "KeyS", "KeyD", "KeyF", "KeyG", "KeyH", "KeyJ", "KeyK", "KeyL", "Semicolon", "Quote", "Enter"],
+    ["ShiftLeft", "KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyK", "KeyM", "Comma", "Period", "Slash", "ShiftRight"],
+    ["ControlLeft", "AltLeft", "Space", "AltRight", "ContextMenu", "ControlRight"]
+  ]
+  const keyboardDimensions = [
+    [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+    [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+    [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+    [3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3],
+    [4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4],
+    [3, 3, 13, 3, 3, 3]
+  ]
+  let keys = {}
+  for (let y=0; y < keyboardLayout.length; y++) {
+    startX = 1;
+    for (let i=0; i < keyboardLayout[y].length; i++) {
+      element = document.createElement("div");
+      element.classList.add("key");
+      endX = startX + keyboardDimensions[y][i];
+      element.style.gridRowStart = y+1;
+      element.style.gridRowEnd = y+1;
+      element.style.gridColumnStart = startX;
+      element.style.gridColumnEnd = endX;
+      keyboard.appendChild(element);
+      keys[keyboardLayout[y][i]] = element;
+      startX = endX;
+    }
+  }
+
   let socket = io();
+  function keyup(key) {
+    if (key in keys) {
+      keys[key].classList.remove("pressed");
+      socket.emit("keyup", key);
+    }
+  }
+  function keydown(key) {
+    if (key in keys) {
+      keys[key].classList.add("pressed");
+      socket.emit(event.repeat ? "keyrepeat" : "keydown", key);
+    }
+  }
+  function keyupall() {
+    for (let key of Object.keys(keys)) {
+      // console.log()
+      if (keys[key].classList.contains("pressed")) {
+        console.log("keyup", key);
+        keyup(key);
+      }
+    }
+  }
   window.addEventListener("keyup", event => {
-    socket.emit("keyup", event.code);
+    keyup(event.code);
   });
   window.addEventListener("keydown", event => {
-    socket.emit(event.repeat ? "keyrepeat" : "keydown", event.code);
+    keydown(event.code);
   });
+  window.addEventListener("blur", keyupall);
+  // window.addEventListener("focusout", keyupall);
 </script>
 
 </body>

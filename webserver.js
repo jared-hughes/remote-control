@@ -38,8 +38,8 @@ let keyMapping = {
   // lights* excluded since browser cannot generate them
   "Minus": "-",
   "Equal": "=",
-  "BracketLeft": "]",
-  "BracketRight": "[",
+  "BracketLeft": "[",
+  "BracketRight": "]",
   "Semicolon": ";",
   "Quote": "'",
   "Backquote": "`",
