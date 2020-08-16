@@ -106,12 +106,18 @@
       }
     }
   }
+  function preventDefault(event) {
+    if (event.code == "Tab") {
+      // avoid tabbing out, but allow other shortcuts
+      event.preventDefault();
+    }
+  }
   window.addEventListener("keyup", event => {
-    event.preventDefault();
+    preventDefault(event);
     keyup(event.code);
   });
   window.addEventListener("keydown", event => {
-    event.preventDefault();
+    preventDefault(event);
     keydown(event.code);
   });
   window.addEventListener("blur", keyupall);
