@@ -77,39 +77,74 @@ robot.setKeyboardDelay(0);
 
 console.log("[INFO] Listening ready.")
 
-// concurrent connections have control over separate keypressed state
-// but both control the same robot keys
+let basePressedCount = {};
+for (let key of Object.keys(keyMapping)) {
+  basePressedCount[key] = 0;
+}
+
+
+// concurrent connections have control over same pressed state
+// and both control the same robot keys
+let totalPressed = {...basePressedCount};
+let pressedBySocket = [];
+let sockets = []
 io.sockets.on('connection', socket => {
-  let pressed = [];
-
-  function keyDown(key) {
-    // pun!
-    if (key in keyMapping) {
-      robot.keyToggle(keyMapping[key], "down");
+  for (let key of Object.keys(totalPressed)) {
+    if (totalPressed[key] > 0) {
+      socket.emit("keydown", key);
     }
   }
-
-  function keyUp(key) {
-    if (key in keyMapping) {
-      robot.keyToggle(keyMapping[key], "up");
-    }
+  sockets.push(socket);
+  pressedBySocket.push({...basePressedCount})
+  for (let s of ["down", "up"]) {
+    socket.on('key' + s, key => {
+      // check if any other socket is disconnected
+      for (let i = sockets.length-1; i >= 0; i--) {
+        sock = sockets[i];
+        // obviously this socket is not disconnected
+        if (sock != socket && sock.disconnected) {
+          sockets.splice(i, 1);
+          [removed] = pressedBySocket.splice(i, 1);
+          for (let key of Object.keys(totalPressed)) {
+            totalPressed[key] -= removed[key];
+          }
+        }
+      }
+      // apply key
+      console.log(s, key);
+      if (key in keyMapping) {
+        if (s == "up") {
+          for (let i = 0; i < sockets.length; i++) {
+            if (sockets[i] == socket) {
+              if (pressedBySocket[i][key]) {
+                pressedBySocket[i][key] = false;
+                totalPressed[key] -= 1;
+              }
+              break;
+            }
+          }
+        }
+        if (totalPressed[key] == 0) {
+          robot.keyToggle(keyMapping[key], s);
+          // Tell other clients that this key is pressed/unpressed
+          for (let sock of sockets) {
+            if (sock != socket) {
+              sock.emit('key' + s, key);
+            }
+          }
+        }
+        if (s == "down") {
+          for (let i = 0; i < sockets.length; i++) {
+            if (sockets[i] == socket) {
+              if (!pressedBySocket[i][key]) {
+                pressedBySocket[i][key] = true;
+                totalPressed[key] += 1;
+              }
+              break;
+            }
+          }
+        }
+      }
+    });
   }
-
-  function keyRepeat(key) {
-    // ignore for now
-  }
-
-  socket.on('keydown', key => {
-    pressed.push(key);
-    keyDown(key);
-  });
-
-  socket.on('keyrepeat', key => {
-    keyRepeat(key)
-  })
-
-  socket.on('keyup', key => {
-    pressed.splice(pressed.indexOf(key), 1)
-    keyUp(key);
-  });
 });

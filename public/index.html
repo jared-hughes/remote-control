@@ -33,8 +33,8 @@
     ["Backquote", "Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6", "Digit7", "Digit8", "Digit9", "Digit0", "Minus", "Equal", "Backspace"],
     ["Tab", "KeyQ", "KeyW", "KeyE", "KeyR", "KeyT", "KeyY", "KeyU", "KeyI", "KeyO", "KeyP", "BracketLeft", "BracketRight", "Backslash"],
     ["CapsLock", "KeyA", "KeyS", "KeyD", "KeyF", "KeyG", "KeyH", "KeyJ", "KeyK", "KeyL", "Semicolon", "Quote", "Enter"],
-    ["ShiftLeft", "KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyK", "KeyM", "Comma", "Period", "Slash", "ShiftRight"],
-    ["ControlLeft", "AltLeft", "Space", "AltRight", "ContextMenu", "ControlRight"]
+    ["ShiftLeft", "KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyN", "KeyM", "Comma", "Period", "Slash", "ShiftRight"],
+    ["ControlLeft", "AltLeft", "Space", "AltRight", "ControlRight"]
   ]
   const keyboardDimensions = [
     [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
@@ -42,7 +42,7 @@
     [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
     [3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3],
     [4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4],
-    [3, 3, 13, 3, 3, 3]
+    [3, 3, 16, 3, 3, 3]
   ]
   let keys = {}
   for (let y=0; y < keyboardLayout.length; y++) {
@@ -60,37 +60,54 @@
       startX = endX;
     }
   }
-
+  let selfPressed = {}
+  for (let key of Object.keys(keys)) {
+    selfPressed[key] = false;
+  }
   let socket = io();
+  function showKeyup(key) {
+    console.log("up", key);
+    keys[key].classList.remove("pressed");
+  }
+  function showKeydown(key) {
+    console.log("down", key);
+    keys[key].classList.add("pressed");
+  }
+  socket.on('keyup', showKeyup);
+  socket.on('keydown', showKeydown);
   function keyup(key) {
     if (key in keys) {
-      keys[key].classList.remove("pressed");
+      selfPressed[key] = false;
+      showKeyup(key);
       socket.emit("keyup", key);
     }
   }
   function keydown(key) {
     if (key in keys) {
-      keys[key].classList.add("pressed");
-      socket.emit(event.repeat ? "keyrepeat" : "keydown", key);
+      if (!event.repeat) {
+        selfPressed[key] = true;
+        showKeydown(key);
+        socket.emit("keydown", key);
+      }
     }
   }
   function keyupall() {
     for (let key of Object.keys(keys)) {
       // console.log()
-      if (keys[key].classList.contains("pressed")) {
-        console.log("keyup", key);
+      if (selfPressed[key]) {
         keyup(key);
       }
     }
   }
   window.addEventListener("keyup", event => {
+    event.preventDefault();
     keyup(event.code);
   });
   window.addEventListener("keydown", event => {
+    event.preventDefault();
     keydown(event.code);
   });
   window.addEventListener("blur", keyupall);
-  // window.addEventListener("focusout", keyupall);
 </script>
 
 </body>
