@@ -29,7 +29,7 @@ let keyMapping = {
   "ControlLeft": "control",
   "ControlRight": "control",
   "ShiftLeft": "shift",
-  "ShiftRight": "shift_right",
+  "ShiftRight": "right_shift",
   // No robot.js Mac support
   "PrintScreen": "printscreen",
   // No robot.js Mac support

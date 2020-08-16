@@ -9,8 +9,11 @@
   display: grid;
   grid-gap: 0.5vw;
   grid-template-columns: repeat(28, auto);
-  /* key height = 1/28 of width; fn keys smaller */
-  grid-template-rows: 2.5vw repeat(5, 3.57vw);
+  /* height = 1/28 of width
+   * fn keys smaller
+   * last row taller to accomodate arrow keys
+   */
+  grid-template-rows: 2.5vw repeat(4, 3.57vw) repeat(2, 2.4vw);
 }
 
 .key {
@@ -34,7 +37,7 @@
     ["Tab", "KeyQ", "KeyW", "KeyE", "KeyR", "KeyT", "KeyY", "KeyU", "KeyI", "KeyO", "KeyP", "BracketLeft", "BracketRight", "Backslash"],
     ["CapsLock", "KeyA", "KeyS", "KeyD", "KeyF", "KeyG", "KeyH", "KeyJ", "KeyK", "KeyL", "Semicolon", "Quote", "Enter"],
     ["ShiftLeft", "KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyN", "KeyM", "Comma", "Period", "Slash", "ShiftRight"],
-    ["ControlLeft", "AltLeft", "Space", "AltRight", "ControlRight"]
+    ["ControlLeft", "AltLeft", "Space", "AltRight", "ControlRight", "ArrowLeft", "ArrowUp", null, "ArrowDown", "ArrowRight"]
   ]
   const keyboardDimensions = [
     [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
@@ -42,25 +45,29 @@
     [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
     [3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3],
     [4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4],
-    [3, 3, 16, 3, 3, 3]
+    [3, 3, 10, 3, 3, 2, 2, -2, 2, 2]
   ]
   let keys = {}
-  for (let y=0; y < keyboardLayout.length; y++) {
+  for (let y=0; y < 6; y++) {
     startX = 1;
     for (let i=0; i < keyboardLayout[y].length; i++) {
-      element = document.createElement("div");
-      element.classList.add("key");
       endX = startX + keyboardDimensions[y][i];
-      element.style.gridRowStart = y+1;
-      element.style.gridRowEnd = y+1;
-      element.style.gridColumnStart = startX;
-      element.style.gridColumnEnd = endX;
-      keyboard.appendChild(element);
-      keys[keyboardLayout[y][i]] = element;
+      if (keyboardLayout[y][i]) {
+        element = document.createElement("div");
+        element.classList.add("key");
+        element.style.gridRowStart = y + 1;
+        element.style.gridRowEnd = y + 2 + (y == 5);
+        element.style.gridColumnStart = startX;
+        element.style.gridColumnEnd = endX;
+        keyboard.appendChild(element);
+        keys[keyboardLayout[y][i]] = element;
+      }
       startX = endX;
     }
   }
-  let selfPressed = {}
+  keys["ArrowUp"].style.gridRowEnd = 7;
+  keys["ArrowDown"].style.gridRowStart = 7;
+  let selfPressed = {};
   for (let key of Object.keys(keys)) {
     selfPressed[key] = false;
   }
