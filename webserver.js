@@ -104,30 +104,9 @@ function getSocketIndex(socket) {
   }
 }
 
-io.sockets.on('connection', socket => {
-  sockets.push(socket);
-
-  /* Key presses */
-  for (let key of Object.keys(totalPressed)) {
-    if (totalPressed[key] > 0) {
-      socket.emit("keydown", key);
-    }
-  }
-  pressedBySocket.push({...basePressedCount})
+function attachKeyListeners(socket) {
   for (let s of ["down", "up"]) {
     socket.on('key' + s, key => {
-      // check if any other socket is disconnected
-      for (let i = sockets.length-1; i >= 0; i--) {
-        sock = sockets[i];
-        // obviously this socket is not disconnected
-        if (sock != socket && sock.disconnected) {
-          sockets.splice(i, 1);
-          [removed] = pressedBySocket.splice(i, 1);
-          for (let key of Object.keys(totalPressed)) {
-            totalPressed[key] -= removed[key];
-          }
-        }
-      }
       // apply key
       console.log(s, key);
       if (key in keyMapping) {
@@ -162,15 +141,17 @@ io.sockets.on('connection', socket => {
       }
     });
   }
+}
 
-  /* Scroll wheel */
+function attachScrollListener(socket) {
   socket.on('wheel', data => {
     let [dx, dy] = data;
     console.log("scroll", dx, dy);
     robot.scrollMouse(dx, dy);
   })
+}
 
-  /* Mouse movement */
+function attachMousemoveListener(socket) {
   socket.on('mousemove', data => {
     let [dx, dy] = data;
     console.log("mousemove", dx, dy);
@@ -178,4 +159,31 @@ io.sockets.on('connection', socket => {
     // always mouse button up??
     robot.moveMouse(current.x + dx, current.y + dy);
   })
+}
+
+io.sockets.on('connection', socket => {
+  sockets.push(socket);
+  // current Keypress states
+  for (let key of Object.keys(totalPressed)) {
+    if (totalPressed[key] > 0) {
+      socket.emit("keydown", key);
+    }
+  }
+  pressedBySocket.push({...basePressedCount})
+  attachKeyListeners(socket);
+  attachScrollListener(socket);
+  attachMousemoveListener(socket);
 });
+
+setInterval(() => {
+  // check if any socket is disconnected
+  for (let i = sockets.length-1; i >= 0; i--) {
+    if (sockets[i].disconnected) {
+      sockets.splice(i, 1);
+      [removed] = pressedBySocket.splice(i, 1);
+      for (let key of Object.keys(totalPressed)) {
+        totalPressed[key] -= removed[key];
+      }
+    }
+  }
+}, 10000);
