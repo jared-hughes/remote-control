@@ -1,22 +1,33 @@
 <!DOCTYPE html>
 <html>
-<body>
+<body class="partial-screen">
 
-<div id="keyboard"></div>
+<div id="keyboard">
+  <button id="toggle-fullscreen" class="only-partial-screen">
+    Toggle fullscreen (for&nbsp;mouse)
+  </button>
+</div>
+<div class="only-full-screen">
+  Fullscreen now.
+</div>
 
 <style>
+body {
+  background: white
+}
+
 #keyboard {
   display: grid;
   grid-gap: 0.5vw;
-  grid-template-columns: repeat(28, auto);
+  grid-template-columns: repeat(28, 1fr);
   /* height = 1/28 of width
    * fn keys smaller
    * last row taller to accomodate arrow keys
    */
-  grid-template-rows: 2.5vw repeat(4, 3.57vw) repeat(2, 2.4vw) 0.5vw 5vw;
+  grid-template-rows: 2.5vw repeat(4, 3.57vw) repeat(2, 2.4vw) 0.5vw 5vw 0.5vw auto;
 }
 
-.key {
+#toggle-fullscreen, .key {
   border-radius: 0.6vw;
   background: hsl(230, 50%, 90%);
 }
@@ -24,6 +35,43 @@
 .key.pressed {
   background: blue;
   background: hsl(230, 50%, 70%);
+}
+
+button {
+  /* destyle */
+  padding: 0;
+  border: none;
+  font: inherit;
+  color: inherit;
+  background-color: transparent;
+  cursor: pointer;
+  opacity: 0.8;
+  box-sizing: border-box;
+}
+
+button:hover {
+  opacity: 1;
+}
+
+button:focus {
+  outline: none;
+  opacity: 0.6;
+}
+
+#toggle-fullscreen {
+  grid-area: 11 / 9 / 12 / 15;
+  font-size: 1.2em;
+  padding: 0.6em;
+  background: hsl(225, 70%, 50%);
+  color: white;
+}
+
+.partial-screen .only-full-screen {
+  display: none !important;
+}
+
+.full-screen .only-partial-screen {
+  display: none !important;
 }
 </style>
 
@@ -109,7 +157,6 @@
   }
   function keyupall() {
     for (let key of Object.keys(keys)) {
-      // console.log()
       if (selfPressed[key]) {
         keyup(key);
       }
@@ -149,6 +196,38 @@
   })
   // for when the user defocuses the browser tab
   window.addEventListener("blur", keyupall);
+
+  /* Full screen handling + Mouse */
+  function mouseMoveListener(event) {
+    data = [event.movementX, event.movementY];
+    console.log("mousemove", data);
+    socket.emit("mousemove", data);
+  }
+  let isFullscreen = false;
+  function toggleFullscreenElements() {
+    isFullscreen = !isFullscreen;
+    if (isFullscreen) {
+      document.body.classList.add("full-screen");
+      document.body.classList.remove("partial-screen");
+      // https://developer.mozilla.org/en-US/docs/Web/API/Element/requestPointerLock
+      // need to track events to check success/failure
+      document.addEventListener("pointerlockchange", () => {
+        // On successful pointer lock
+        document.addEventListener("mousemove", mouseMoveListener)
+      });
+      document.body.requestPointerLock();
+    } else {
+      document.body.classList.remove("full-screen");
+      document.body.classList.add("partial-screen");
+      document.exitPointerLock();
+      document.removeEventListener("mousemove", mouseMoveListener);
+    }
+  }
+  document.addEventListener("fullscreenchange", toggleFullscreenElements);
+  // Calls toggleFullscreenElements through fullscreenchange event
+  // If requsetFullscreen, we just won't go fullscreen
+  document.getElementById("toggle-fullscreen")
+  .addEventListener("click", document.body.requestFullscreen);
 </script>
 
 </body>

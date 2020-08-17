@@ -169,4 +169,13 @@ io.sockets.on('connection', socket => {
     console.log("scroll", dx, dy);
     robot.scrollMouse(dx, dy);
   })
+
+  /* Mouse movement */
+  socket.on('mousemove', data => {
+    let [dx, dy] = data;
+    console.log("mousemove", dx, dy);
+    current = robot.getMousePos();
+    // always mouse button up??
+    robot.moveMouse(current.x + dx, current.y + dy);
+  })
 });
