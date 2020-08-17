@@ -2,10 +2,13 @@ let http = require('http').createServer(handler);
 let fs = require('fs');
 let io = require('socket.io')(http);
 let robot = require("robotjs");
+let open = require('open');
 
 console.log("[INFO] Libraries loaded.")
 
 http.listen(8000);
+
+open('http://localhost:8000/config', true);
 
 const mouseMapping = {
   "#MouseLeft": "left",
@@ -71,12 +74,27 @@ for (let i = 1; i <= 12; i++) {
 }
 
 function handler(req, res) {
-  // always give index.html regardless of the path
-  fs.readFile(__dirname + '/public/index.html', (err, data) => {
-    res.writeHead(200, {'Content-Type': 'text/html'});
+  function serveHTML(data, mimetype) {
+    res.writeHead(200, {'Content-Type': mimetype});
     res.write(data); // write data from index.html
-    return res.end();
-  });
+    res.end();
+  }
+  function serveFile(relPath, mimetype) {
+    fs.readFile(__dirname + relPath, (err, data) => {
+      serveHTML(data, mimetype);
+    });
+  }
+  switch(req.url) {
+    case '/':
+      serveFile("/public/index.html", "text/html")
+      break;
+    case '/config':
+      serveFile("/public/config.html", "text/html");
+      break;
+    case '/style.css':
+      serveFile("/public/style.css", "text/css");
+      break;
+  }
 }
 
 robot.setKeyboardDelay(0);
@@ -161,18 +179,42 @@ function attachMousemoveListener(socket) {
   })
 }
 
+let broadcaster;
+
 io.sockets.on('connection', socket => {
-  sockets.push(socket);
-  // current Keypress states
-  for (let key of Object.keys(totalPressed)) {
-    if (totalPressed[key] > 0) {
-      socket.emit("keydown", key);
+  socket.on("watcher", () => {
+    // WebRTC:
+    socket.to(broadcaster).emit("watcher", socket.id);
+    // Controllers:
+    sockets.push(socket);
+    // current Keypress states
+    for (let key of Object.keys(totalPressed)) {
+      if (totalPressed[key] > 0) {
+        socket.emit("keydown", key);
+      }
     }
-  }
-  pressedBySocket.push({...basePressedCount})
-  attachKeyListeners(socket);
-  attachScrollListener(socket);
-  attachMousemoveListener(socket);
+    pressedBySocket.push({...basePressedCount})
+    attachKeyListeners(socket);
+    attachScrollListener(socket);
+    attachMousemoveListener(socket);
+  });
+  // WebRTC communication (https://gabrieltanner.org/blog/webrtc-video-broadcast):
+  socket.on("broadcaster", () => {
+    broadcaster = socket.id;
+    socket.broadcast.emit("broadcaster");
+  })
+  socket.on("disconnect", () => {
+    socket.to(broadcaster).emit("disconnect peer", socket.id);
+  })
+  socket.on("offer", (id, message) => {
+    socket.to(id).emit("offer", socket.id, message);
+  });
+  socket.on("answer", (id, message) => {
+    socket.to(id).emit("answer", socket.id, message);
+  });
+  socket.on("candidate", (id, message) => {
+    socket.to(id).emit("candidate", socket.id, message);
+  });
 });
 
 setInterval(() => {

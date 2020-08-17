@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link href="/style.css" rel="stylesheet">
+  <title> Config Remote Control </title>
+</head>
+<body>
+<button id="start">
+  Start video stream
+</button>
+<video playsinline autoplay muted></video>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+<script>
+document.getElementById("start").addEventListener("click", () => {
+  // aka broadcast.js in https://gabrieltanner.org/blog/webrtc-video-broadcast
+  const peerConnections = {};
+  const config = {
+    iceServers: [
+      {
+        urls: [
+          // add more? idk
+          "stun:stun.l.google.com:19302"
+        ]
+      }
+    ]
+  }
+  const socket = io();
+  const videoElement = document.querySelector("video");
+  const constraints = {
+    video: true,
+    // audio: false,
+  }
+  navigator.mediaDevices
+    .getDisplayMedia(constraints)
+    .then(stream => {
+      videoElement.srcObject = stream;
+      socket.emit("broadcaster");
+    })
+    .catch(console.error)
+
+  socket.on("watcher", id => {
+    console.log("watcher");
+    const peerConnection = new RTCPeerConnection(config);
+    peerConnections[id] = peerConnection;
+
+    let stream = videoElement.srcObject;
+    stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+
+    peerConnection.onicecandidate = event => {
+      if (event.candidate) {
+        socket.emit("candidate", id, event.candidate);
+      }
+    }
+
+    peerConnection.createOffer()
+      .then(sdp => peerConnection.setLocalDescription(sdp))
+      .then(() => socket.emit("offer", id, peerConnection.localDescription))
+  });
+
+  socket.on("answer", (id, description) => {
+    console.log("answer");
+    peerConnections[id].setRemoteDescription(description);
+  });
+
+  socket.on("candidate", (id, candidate) => {
+    console.log("candidate");
+    peerConnections[id].addIceCandidate(new RTCIceCandidate(candidate));
+  });
+
+  socket.on("disconnectPeer", id => {
+    peerConnections[id].close();
+    delete peerConnections[id];
+  });
+
+  window.onunload = window.onbeforeunload = () => {
+    socket.close();
+  };
+});
+</script>
+</body>
+</html>
