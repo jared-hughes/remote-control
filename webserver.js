@@ -6,8 +6,6 @@ let open = require('open');
 
 console.log("[INFO] Libraries loaded.")
 
-http.listen(8000);
-
 open('http://localhost:8000/config', true);
 
 const mouseMapping = {
@@ -137,6 +135,7 @@ function attachKeyListeners(socket) {
         }
         if (totalPressed[key] == 0) {
           // note reversed argument order between mouseToggle and keyToggle
+          // diss
           if (key in mouseMapping) {
             robot.mouseToggle(s, mouseMapping[key])
           } else {
@@ -165,6 +164,7 @@ function attachScrollListener(socket) {
   socket.on('wheel', data => {
     let [dx, dy] = data;
     console.log("scroll", dx, dy);
+    // diss
     robot.scrollMouse(dx, dy);
   })
 }
@@ -175,6 +175,7 @@ function attachMousemoveListener(socket) {
     console.log("mousemove", dx, dy);
     current = robot.getMousePos();
     // always mouse button up??
+    // diss
     robot.moveMouse(current.x + dx, current.y + dy);
   })
 }
@@ -183,6 +184,7 @@ let broadcaster;
 
 io.sockets.on('connection', socket => {
   socket.on("watcher", () => {
+    console.log("watcher");
     // WebRTC:
     socket.to(broadcaster).emit("watcher", socket.id);
     // Controllers:
@@ -200,22 +202,30 @@ io.sockets.on('connection', socket => {
   });
   // WebRTC communication (https://gabrieltanner.org/blog/webrtc-video-broadcast):
   socket.on("broadcaster", () => {
+    console.log("broadcaster registered");
     broadcaster = socket.id;
     socket.broadcast.emit("broadcaster");
   })
   socket.on("disconnect", () => {
+    console.log("peer disconnected");
     socket.to(broadcaster).emit("disconnect peer", socket.id);
   })
   socket.on("offer", (id, message) => {
+    console.log("offer");
     socket.to(id).emit("offer", socket.id, message);
   });
   socket.on("answer", (id, message) => {
+    console.log("answer");
     socket.to(id).emit("answer", socket.id, message);
   });
   socket.on("candidate", (id, message) => {
+    console.log("candidate");
     socket.to(id).emit("candidate", socket.id, message);
   });
 });
+
+const port = 8000
+http.listen(port, () => console.log(`Server is running on port ${port}`));
 
 setInterval(() => {
   // check if any socket is disconnected

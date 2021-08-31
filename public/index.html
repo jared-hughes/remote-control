@@ -80,7 +80,7 @@
     console.log("down", key);
     keys[key].classList.add("pressed");
   }
-  let socket = io();
+  let socket = io(window.location.origin);
   socket.on('keyup', showKeyup);
   socket.on('keydown', showKeydown);
   function keyup(key) {
@@ -182,10 +182,8 @@
   const config = {
     iceServers: [
       {
-        urls: [
-          // add more? idk
-          "stun:stun.l.google.com:19302"
-        ]
+        // add more? idk
+        urls: "stun:stun.l.google.com:19302",
       }
     ]
   }
@@ -201,6 +199,7 @@
         socket.emit("answer", id, peerConnection.localDescription);
       });
     peerConnection.ontrack = event => {
+      console.log("ontrack", event);
       videoElement.srcObject = event.streams[0];
     };
     peerConnection.onicecandidate = event => {
@@ -225,6 +224,11 @@
     console.log("disconnect");
     peerConnection.close();
   });
+
+  socket.on("broadcaster", () => {
+    console.log("broadcaster");
+    socket.emit("watcher");
+  })
 
   window.onunload = window.onbeforeunload = () => {
     socket.close();
